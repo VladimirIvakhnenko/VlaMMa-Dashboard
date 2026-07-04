@@ -42,7 +42,10 @@ def load_image(uploaded_file) -> np.ndarray:
 def bgr_to_rgb(img: np.ndarray) -> np.ndarray:
     return cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
 
-def generate_pdf_report(result, filename: str) -> bytes:
+def calculate_physical_area(pixels: int, um_per_pixel: float) -> float:
+    return pixels * ((um_per_pixel / 1000.0) ** 2)
+
+def generate_pdf_report(result, filename: str, um_per_pixel: float) -> bytes:
     buffer = io.BytesIO()
     doc = SimpleDocTemplate(buffer, pagesize=letter, rightMargin=40, leftMargin=40, topMargin=40, bottomMargin=40)
     
@@ -108,18 +111,32 @@ def generate_pdf_report(result, filename: str) -> bytes:
     story.append(Paragraph(f"<b>Заключение:</b> {result.conclusion}", text_style))
     story.append(Spacer(1, 10))
     
+    talc_mm2 = calculate_physical_area(result.talc_area_px, um_per_pixel)
+    ord_mm2 = calculate_physical_area(result.ordinary_area_px, um_per_pixel)
+    fine_mm2 = calculate_physical_area(result.fine_area_px, um_per_pixel)
+    
     story.append(Paragraph("Количественные метрики", header_style))
     data = [
-        [Paragraph("<b>Показатель</b>", bold_text_style), Paragraph("<b>Значение</b>", bold_text_style)],
-        [Paragraph("Доля талька (%)", text_style), Paragraph(f"{result.talc_percent:.2f}%", text_style)],
-        [Paragraph("Обычные сульфидные срастания (%)", text_style), Paragraph(f"{result.sulfide_ordinary_percent:.2f}%", text_style)],
-        [Paragraph("Тонкие сульфидные срастания (%)", text_style), Paragraph(f"{result.sulfide_fine_percent:.2f}%", text_style)],
-        [Paragraph("Преобладание тонких срастаний среди сульфидов (%)", text_style), Paragraph(f"{result.fine_prevalence_percent:.2f}%", text_style)],
+        [Paragraph("<b>Показатель</b>", bold_text_style), 
+         Paragraph("<b>Значение (%)</b>", bold_text_style), 
+         Paragraph("<b>Площадь (мм²)</b>", bold_text_style)],
+        [Paragraph("Доля талька", text_style), 
+         Paragraph(f"{result.talc_percent:.2f}%", text_style), 
+         Paragraph(f"{talc_mm2:.4f} мм²", text_style)],
+        [Paragraph("Обычные сульфидные срастания", text_style), 
+         Paragraph(f"{result.sulfide_ordinary_percent:.2f}%", text_style), 
+         Paragraph(f"{ord_mm2:.4f} мм²", text_style)],
+        [Paragraph("Тонкие сульфидные срастания", text_style), 
+         Paragraph(f"{result.sulfide_fine_percent:.2f}%", text_style), 
+         Paragraph(f"{fine_mm2:.4f} мм²", text_style)],
+        [Paragraph("Преобладание тонких срастаний", text_style), 
+         Paragraph(f"{result.fine_prevalence_percent:.2f}%", text_style), 
+         Paragraph("-", text_style)],
     ]
     
-    t = Table(data, colWidths=[320, 180])
+    t = Table(data, colWidths=[200, 150, 150])
     t.setStyle(TableStyle([
-        ('BACKGROUND', (0,0), (1,0), '#f1f5f9'),
+        ('BACKGROUND', (0,0), (2,0), '#f1f5f9'),
         ('ALIGN', (0,0), (-1,-1), 'LEFT'),
         ('BOTTOMPADDING', (0,0), (-1,-1), 6),
         ('TOPPADDING', (0,0), (-1,-1), 6),
@@ -155,6 +172,22 @@ with st.sidebar:
     st.title("🔬 Настройки")
     st.markdown("---")
     
+    st.subheader("Масштаб и калибровка")
+    opt_lens = st.selectbox(
+        "Увеличение объектива",
+        ["5x (1.50 мкм/пиксель)", "10x (0.75 мкм/пиксель)", "20x (0.37 мкм/пиксель)", "Ввести вручную"]
+    )
+    
+    if opt_lens == "5x (1.50 мкм/пиксель)":
+        um_per_pixel = 1.50
+    elif opt_lens == "10x (0.75 мкм/пиксель)":
+        um_per_pixel = 0.75
+    elif opt_lens == "20x (0.37 мкм/пиксель)":
+        um_per_pixel = 0.37
+    else:
+        um_per_pixel = st.number_input("Разрешение (мкм/пиксель)", min_value=0.01, max_value=100.0, value=1.00, step=0.05)
+        
+    st.markdown("---")
     st.subheader("Визуализация")
     overlay_alpha = st.slider(
         "Прозрачность маски", 0.1, 0.9, 0.45, 0.05,
@@ -200,22 +233,26 @@ with tab_single:
         if st.button("🚀 Запустить анализ", type="primary", use_container_width=True):
             with st.spinner("Анализируем шлиф с помощью нейросети U-Net..."):
                 t0 = time.time()
-                result = analyze_image(img_bgr)
+                result = analyze_image(img_bgr, filename=uploaded.name)
                 elapsed = time.time() - t0
 
             st.success(f"✅ Анализ завершён за {elapsed:.1f} сек.")
+
+            talc_mm2 = calculate_physical_area(result.talc_area_px, um_per_pixel)
+            ord_mm2 = calculate_physical_area(result.ordinary_area_px, um_per_pixel)
+            fine_mm2 = calculate_physical_area(result.fine_area_px, um_per_pixel)
 
             m1, m2, m3, m4 = st.columns(4)
             with m1:
                 st.metric(
                     "🔵 Доля талька",
                     f"{result.talc_percent:.2f}%",
-                    delta="Порог: 10.0%"
+                    delta=f"{talc_mm2:.4f} мм²"
                 )
             with m2:
-                st.metric("🟢 Обычные сульфиды", f"{result.sulfide_ordinary_percent:.2f}%")
+                st.metric("🟢 Обычные сульфиды", f"{result.sulfide_ordinary_percent:.2f}%", delta=f"{ord_mm2:.4f} мм²")
             with m3:
-                st.metric("🔴 Тонкие сульфиды", f"{result.sulfide_fine_percent:.2f}%")
+                st.metric("🔴 Тонкие сульфиды", f"{result.sulfide_fine_percent:.2f}%", delta=f"{fine_mm2:.4f} мм²")
             with m4:
                 st.metric("📈 Тонкие срастания", f"{result.fine_prevalence_percent:.1f}%")
 
@@ -264,7 +301,7 @@ with tab_single:
             ecol1, ecol2, ecol3 = st.columns(3)
 
             with ecol1:
-                pdf_data = generate_pdf_report(result, uploaded.name)
+                pdf_data = generate_pdf_report(result, uploaded.name, um_per_pixel)
                 st.download_button(
                     "⬇️ Скачать PDF Отчет",
                     data=pdf_data,
@@ -287,15 +324,20 @@ with tab_single:
                 csv_buf = io.StringIO()
                 writer = csv.writer(csv_buf)
                 writer.writerow([
-                    "Файл", "Класс руды", "Доля талька (%)", 
-                    "Обычные сульфиды (%)", "Тонкие сульфиды (%)", "Преобладание тонких срастаний (%)"
+                    "Файл", "Класс руды", "Доля талька (%)", "Площадь талька (мм²)",
+                    "Обычные сульфиды (%)", "Площадь обычных сульфидов (мм²)",
+                    "Тонкие сульфиды (%)", "Площадь тонких сульфидов (мм²)",
+                    "Преобладание тонких срастаний (%)"
                 ])
                 writer.writerow([
                     uploaded.name,
                     result.ore_class,
                     f"{result.talc_percent:.2f}",
+                    f"{talc_mm2:.6f}",
                     f"{result.sulfide_ordinary_percent:.2f}",
+                    f"{ord_mm2:.6f}",
                     f"{result.sulfide_fine_percent:.2f}",
+                    f"{fine_mm2:.6f}",
                     f"{result.fine_prevalence_percent:.2f}"
                 ])
                 st.download_button(
@@ -350,13 +392,21 @@ with tab_batch:
                     img_bgr = cv2.imread(str(img_path))
                     if img_bgr is None:
                         continue
-                    result = analyze_image(img_bgr)
+                    result = analyze_image(img_bgr, filename=img_path.name)
+                    
+                    talc_mm2 = calculate_physical_area(result.talc_area_px, um_per_pixel)
+                    ord_mm2 = calculate_physical_area(result.ordinary_area_px, um_per_pixel)
+                    fine_mm2 = calculate_physical_area(result.fine_area_px, um_per_pixel)
+                    
                     results_list.append({
                         "Файл": img_path.name,
                         "Класс руды": result.ore_class,
                         "Доля талька (%)": f"{result.talc_percent:.2f}",
+                        "Площадь талька (мм²)": f"{talc_mm2:.4f}",
                         "Обычные сульфиды (%)": f"{result.sulfide_ordinary_percent:.2f}",
+                        "Площадь обычных сульфидов (мм²)": f"{ord_mm2:.4f}",
                         "Тонкие сульфиды (%)": f"{result.sulfide_fine_percent:.2f}",
+                        "Площадь тонких сульфидов (мм²)": f"{fine_mm2:.4f}",
                         "Преобладание тонких (%)": f"{result.fine_prevalence_percent:.2f}",
                         "Вывод": result.conclusion,
                     })
@@ -402,9 +452,12 @@ with tab_about:
     * Зеленый - Обычные срастания сульфидов.
     * Красный - Тонкие срастания сульфидов.
 
+    ### Воспроизводимость и логирование
+    Все сессии анализа логгируются в файл `analysis_log.txt` в корневой папке проекта. Записывается время запуска, имя файла, его параметры и итоговое геологическое заключение.
+
     ### Технологический стек
     - **Сегментация**: U-Net (ResNet-34) на фреймворке PyTorch.
     - **Инференс панорам**: Скользящее окно (tiling, патч 512x512, шаг 128) с накоплением и линейным сглаживанием стыков.
-    - **Морфология сульфидов**: Анализ контуров на основе эрозии.
+    - **Морфология сульфидов**: Анализ контуров на основе эрозии с CLAHE предобработкой освещения.
     - **Экспорт отчетов**: ReportLab PDF Engine.
     """, unsafe_allow_html=True)

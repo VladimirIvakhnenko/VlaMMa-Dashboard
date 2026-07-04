@@ -4,6 +4,14 @@ from dataclasses import dataclass
 from pathlib import Path
 import torch
 import segmentation_models_pytorch as smp
+import logging
+
+logging.basicConfig(
+    filename="analysis_log.txt",
+    level=logging.INFO,
+    format="%(asctime)s - %(levelname)s - %(message)s",
+    encoding="utf-8"
+)
 
 MODEL_PATH = "best_unet_model.pth"
 TILE_SIZE = 512
@@ -27,6 +35,9 @@ class DetectionResult:
     ore_class_en: str
     conclusion: str
     overlay: np.ndarray
+    talc_area_px: int
+    ordinary_area_px: int
+    fine_area_px: int
 
 def get_model():
     global _MODEL_INSTANCE
@@ -93,9 +104,12 @@ def predict_tiled(model, img_rgb, step=128) -> np.ndarray:
 
 def detect_and_classify_sulfides(img_bgr: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
     img_hsv = cv2.cvtColor(img_bgr, cv2.COLOR_BGR2HSV)
-    brightness = img_hsv[:, :, 2]
+    h_chan, s_chan, v_chan = cv2.split(img_hsv)
     
-    sulfide_mask = (brightness > 150).astype(np.uint8) * 255
+    clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(8, 8))
+    v_norm = clahe.apply(v_chan)
+    
+    sulfide_mask = (v_norm > 165).astype(np.uint8) * 255
     kernel_open = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (3, 3))
     sulfide_mask = cv2.morphologyEx(sulfide_mask, cv2.MORPH_OPEN, kernel_open, iterations=1)
     
@@ -156,7 +170,7 @@ def create_overlay(img_bgr: np.ndarray,
     
     return result
 
-def analyze_image(img_bgr: np.ndarray) -> DetectionResult:
+def analyze_image(img_bgr: np.ndarray, filename: str = "unknown") -> DetectionResult:
     h, w = img_bgr.shape[:2]
     img_rgb = cv2.cvtColor(img_bgr, cv2.COLOR_BGR2RGB)
     
@@ -174,15 +188,19 @@ def analyze_image(img_bgr: np.ndarray) -> DetectionResult:
     ann_mask = extract_annotation_mask(img_bgr)
     
     total_pixels = h * w
-    talc_fraction = float((talc_mask > 0).sum()) / total_pixels
+    talc_pixels = int((talc_mask > 0).sum())
+    ordinary_pixels = int((ordinary_mask > 0).sum())
+    fine_pixels = int((fine_mask > 0).sum())
+    
+    talc_fraction = float(talc_pixels) / total_pixels
     talc_percent = talc_fraction * 100
     
-    ordinary_percent = (float((ordinary_mask > 0).sum()) / total_pixels) * 100
-    fine_percent = (float((fine_mask > 0).sum()) / total_pixels) * 100
+    ordinary_percent = (float(ordinary_pixels) / total_pixels) * 100
+    fine_percent = (float(fine_pixels) / total_pixels) * 100
     
-    total_sulfide_pixels = (ordinary_mask > 0).sum() + (fine_mask > 0).sum()
+    total_sulfide_pixels = ordinary_pixels + fine_pixels
     if total_sulfide_pixels > 0:
-        fine_prevalence = (float((fine_mask > 0).sum()) / total_sulfide_pixels) * 100
+        fine_prevalence = (float(fine_pixels) / total_sulfide_pixels) * 100
     else:
         fine_prevalence = 0.0
         
@@ -214,6 +232,12 @@ def analyze_image(img_bgr: np.ndarray) -> DetectionResult:
             
     overlay = create_overlay(img_bgr, talc_mask, ordinary_mask, fine_mask, ann_mask)
     
+    logging.info(
+        f"File: {filename} | Resolution: {w}x{h} | Talc: {talc_percent:.2f}% | "
+        f"Ordinary Sulfides: {ordinary_percent:.2f}% | Fine Sulfides: {fine_percent:.2f}% | "
+        f"Fine Prevalence: {fine_prevalence:.2f}% | Verdict: {ore_class}"
+    )
+    
     return DetectionResult(
         talc_mask=talc_mask,
         sulfide_ordinary_mask=ordinary_mask,
@@ -227,5 +251,8 @@ def analyze_image(img_bgr: np.ndarray) -> DetectionResult:
         ore_class=ore_class,
         ore_class_en=ore_class_en,
         conclusion=conclusion,
-        overlay=overlay
+        overlay=overlay,
+        talc_area_px=talc_pixels,
+        ordinary_area_px=ordinary_pixels,
+        fine_area_px=fine_pixels
     )
