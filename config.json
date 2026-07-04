@@ -1,0 +1,33 @@
+{
+  "processing": {
+    "max_resolution": 2048,
+    "clahe_clip_limit": 2.0,
+    "clahe_tile_grid": 16,
+    "dark_mean_threshold": 80,
+    "dark_std_threshold": 40,
+    "gamma_dark": 0.7,
+    "gamma_medium": 0.85,
+    "boost_alpha": 1.2,
+    "boost_beta": 10
+  },
+  "sulfide": {
+    "percentile": 70.0,
+    "min_area": 800,
+    "morph_kernel": 7,
+    "morph_close_iter": 2
+  },
+  "replacement": {
+    "intensity_thresh": 155,
+    "ratio_threshold": 0.35
+  },
+  "talc": {
+    "bh_kernel": 51,
+    "morph_kernel": 21,
+    "min_area": 100,
+    "max_area": 80000,
+    "halo_radius": 5
+  },
+  "classification": {
+    "talc_threshold": 10.0
+  }
+}

@@ -1,0 +1,26 @@
+{
+  "sulfide": {
+    "brightness_min": 160,
+    "use_percentile": true,
+    "percentile": 85,
+    "morph_kernel": 7,
+    "morph_iterations_close": 2,
+    "morph_iterations_open": 1
+  },
+  "talc": {
+    "brightness_max": 60,
+    "halo_radius": 70,
+    "morph_kernel": 5,
+    "morph_iterations": 3,
+    "min_blob_size": 100,
+    "max_blob_size": 5000
+  },
+  "replacement": {
+    "brightness_max": 120,
+    "morph_kernel": 3
+  },
+  "classification": {
+    "talc_threshold_percent": 10.0,
+    "replacement_threshold_percent": 35.0
+  }
+}

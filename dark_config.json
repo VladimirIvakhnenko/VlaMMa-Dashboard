@@ -1,0 +1,27 @@
+{
+  "processing": {
+    "max_resolution": 2048,
+    "clahe_clip_limit": 2.0,
+    "clahe_tile_grid": 16
+  },
+  "sulfide": {
+    "percentile": 70.0,
+    "min_area": 800,
+    "morph_kernel": 7,
+    "morph_close_iter": 2
+  },
+  "replacement": {
+    "intensity_thresh": 100,
+    "ratio_threshold": 0.35
+  },
+  "talc": {
+    "bh_kernel": 51,
+    "morph_kernel": 31,
+    "min_area": 100,
+    "max_area": 80000,
+    "halo_radius": 15
+  },
+  "classification": {
+    "talc_threshold": 10.0
+  }
+}
