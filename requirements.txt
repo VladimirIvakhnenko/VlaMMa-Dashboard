@@ -1,0 +1,11 @@
+opencv-python
+numpy
+streamlit
+Pillow
+scikit-learn
+scipy
+reportlab
+matplotlib
+albumentations
+segmentation-models-pytorch
+tqdm

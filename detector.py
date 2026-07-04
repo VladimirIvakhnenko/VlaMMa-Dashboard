@@ -1,0 +1,231 @@
+import cv2
+import numpy as np
+from dataclasses import dataclass
+from pathlib import Path
+import torch
+import segmentation_models_pytorch as smp
+
+MODEL_PATH = "best_unet_model.pth"
+TILE_SIZE = 512
+DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+PROBS_THRESHOLD = 0.35
+
+_MODEL_INSTANCE = None
+
+@dataclass
+class DetectionResult:
+    talc_mask: np.ndarray
+    sulfide_ordinary_mask: np.ndarray
+    sulfide_fine_mask: np.ndarray
+    annotation_mask: np.ndarray
+    talc_fraction: float
+    talc_percent: float
+    sulfide_ordinary_percent: float
+    sulfide_fine_percent: float
+    fine_prevalence_percent: float
+    ore_class: str
+    ore_class_en: str
+    conclusion: str
+    overlay: np.ndarray
+
+def get_model():
+    global _MODEL_INSTANCE
+    if _MODEL_INSTANCE is None:
+        model = smp.Unet(
+            encoder_name="resnet34",
+            encoder_weights=None,
+            in_channels=3,
+            classes=1,
+            activation=None
+        )
+        weights = Path(MODEL_PATH)
+        if weights.exists():
+            model.load_state_dict(torch.load(str(weights), map_location=DEVICE))
+        model.to(DEVICE)
+        model.eval()
+        _MODEL_INSTANCE = model
+    return _MODEL_INSTANCE
+
+def predict_patch(model, patch_rgb) -> np.ndarray:
+    x = patch_rgb.astype(np.float32) / 255.0
+    x = np.transpose(x, (2, 0, 1))
+    
+    x_orig = torch.tensor(x).unsqueeze(0).to(DEVICE)
+    x_hflip = torch.flip(x_orig, dims=[3])
+    
+    with torch.no_grad():
+        pred_orig = torch.sigmoid(model(x_orig))
+        pred_hflip = torch.flip(torch.sigmoid(model(x_hflip)), dims=[3])
+        pred = (pred_orig + pred_hflip) / 2.0
+        
+    return pred.squeeze().cpu().numpy()
+
+def predict_tiled(model, img_rgb, step=128) -> np.ndarray:
+    h, w = img_rgb.shape[:2]
+    
+    pad_h = (TILE_SIZE - h % TILE_SIZE) % TILE_SIZE
+    pad_w = (TILE_SIZE - w % TILE_SIZE) % TILE_SIZE
+    
+    padded_img = cv2.copyMakeBorder(img_rgb, 0, pad_h, 0, pad_w, cv2.BORDER_REFLECT)
+    ph, pw = padded_img.shape[:2]
+    
+    prob_map = np.zeros((ph, pw), dtype=np.float32)
+    weight_map = np.zeros((ph, pw), dtype=np.float32)
+    
+    y_coords, x_coords = np.indices((TILE_SIZE, TILE_SIZE))
+    dist_to_edge = np.minimum(
+        np.minimum(y_coords, TILE_SIZE - 1 - y_coords),
+        np.minimum(x_coords, TILE_SIZE - 1 - x_coords)
+    )
+    tile_weight = dist_to_edge.astype(np.float32) / (TILE_SIZE / 2)
+    tile_weight = np.clip(tile_weight, 0.05, 1.0)
+    
+    for y in range(0, ph - TILE_SIZE + 1, step):
+        for x in range(0, pw - TILE_SIZE + 1, step):
+            patch = padded_img[y:y+TILE_SIZE, x:x+TILE_SIZE]
+            pred_patch = predict_patch(model, patch)
+            
+            prob_map[y:y+TILE_SIZE, x:x+TILE_SIZE] += pred_patch * tile_weight
+            weight_map[y:y+TILE_SIZE, x:x+TILE_SIZE] += tile_weight
+            
+    prob_map /= np.maximum(weight_map, 1e-5)
+    return prob_map[:h, :w]
+
+def detect_and_classify_sulfides(img_bgr: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
+    img_hsv = cv2.cvtColor(img_bgr, cv2.COLOR_BGR2HSV)
+    brightness = img_hsv[:, :, 2]
+    
+    sulfide_mask = (brightness > 150).astype(np.uint8) * 255
+    kernel_open = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (3, 3))
+    sulfide_mask = cv2.morphologyEx(sulfide_mask, cv2.MORPH_OPEN, kernel_open, iterations=1)
+    
+    h, w = sulfide_mask.shape
+    ordinary_mask = np.zeros((h, w), dtype=np.uint8)
+    fine_mask = np.zeros((h, w), dtype=np.uint8)
+    
+    k_size = int(max(h, w) * 0.025)
+    if k_size % 2 == 0:
+        k_size += 1
+    k_size = max(5, k_size)
+    
+    kernel_erode = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (k_size, k_size))
+    eroded = cv2.erode(sulfide_mask, kernel_erode)
+    
+    contours, _ = cv2.findContours(sulfide_mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+    
+    for cnt in contours:
+        area = cv2.contourArea(cnt)
+        if area < 100:
+            continue
+            
+        temp = np.zeros((h, w), dtype=np.uint8)
+        cv2.drawContours(temp, [cnt], -1, 255, -1)
+        
+        has_massive_core = np.any(np.logical_and(temp, eroded))
+        
+        if has_massive_core:
+            cv2.drawContours(ordinary_mask, [cnt], -1, 255, -1)
+        else:
+            cv2.drawContours(fine_mask, [cnt], -1, 255, -1)
+            
+    return ordinary_mask, fine_mask
+
+def extract_annotation_mask(img_bgr: np.ndarray) -> np.ndarray:
+    img_hsv = cv2.cvtColor(img_bgr, cv2.COLOR_BGR2HSV)
+    lower = np.array([100, 100, 50])
+    upper = np.array([130, 255, 255])
+    mask = cv2.inRange(img_hsv, lower, upper)
+    return mask
+
+def create_overlay(img_bgr: np.ndarray,
+                   talc_mask: np.ndarray,
+                   ordinary_mask: np.ndarray,
+                   fine_mask: np.ndarray,
+                   ann_mask: np.ndarray,
+                   alpha: float = 0.45) -> np.ndarray:
+    overlay = img_bgr.copy()
+    
+    overlay[talc_mask > 0] = [255, 0, 0]
+    overlay[ordinary_mask > 0] = [0, 200, 0]
+    overlay[fine_mask > 0] = [0, 0, 220]
+    
+    result = cv2.addWeighted(img_bgr, 1 - alpha, overlay, alpha, 0)
+    
+    contours_talc, _ = cv2.findContours(talc_mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+    cv2.drawContours(result, contours_talc, -1, (255, 0, 0), 2)
+    
+    return result
+
+def analyze_image(img_bgr: np.ndarray) -> DetectionResult:
+    h, w = img_bgr.shape[:2]
+    img_rgb = cv2.cvtColor(img_bgr, cv2.COLOR_BGR2RGB)
+    
+    model = get_model()
+    
+    if max(h, w) > 1024:
+        probs = predict_tiled(model, img_rgb, step=128)
+    else:
+        img_resized = cv2.resize(img_rgb, (TILE_SIZE, TILE_SIZE))
+        probs_resized = predict_patch(model, img_resized)
+        probs = cv2.resize(probs_resized, (w, h), interpolation=cv2.INTER_LINEAR)
+        
+    talc_mask = (probs > PROBS_THRESHOLD).astype(np.uint8) * 255
+    ordinary_mask, fine_mask = detect_and_classify_sulfides(img_bgr)
+    ann_mask = extract_annotation_mask(img_bgr)
+    
+    total_pixels = h * w
+    talc_fraction = float((talc_mask > 0).sum()) / total_pixels
+    talc_percent = talc_fraction * 100
+    
+    ordinary_percent = (float((ordinary_mask > 0).sum()) / total_pixels) * 100
+    fine_percent = (float((fine_mask > 0).sum()) / total_pixels) * 100
+    
+    total_sulfide_pixels = (ordinary_mask > 0).sum() + (fine_mask > 0).sum()
+    if total_sulfide_pixels > 0:
+        fine_prevalence = (float((fine_mask > 0).sum()) / total_sulfide_pixels) * 100
+    else:
+        fine_prevalence = 0.0
+        
+    if talc_percent > 10.0:
+        ore_class = "Оталькованная руда"
+        ore_class_en = "talcified"
+        conclusion = (
+            f"Руда классифицирована как оталькованная: содержание талька — {talc_percent:.1f}%, "
+            f"преобладание тонких срастаний — {fine_prevalence:.1f}%. "
+            f"Порог оталькования (10%) превышен."
+        )
+    else:
+        if fine_prevalence <= 40.0:
+            ore_class = "Рядовая руда"
+            ore_class_en = "ordinary"
+            conclusion = (
+                f"Руда классифицирована как рядовая: содержание талька — {talc_percent:.1f}%, "
+                f"преобладание тонких срастаний — {fine_prevalence:.1f}%. "
+                f"Содержание талька в норме, преобладают крупные сплошные сульфиды."
+            )
+        else:
+            ore_class = "Труднообогатимая руда"
+            ore_class_en = "hard_to_enrich"
+            conclusion = (
+                f"Руда классифицирована как труднообогатимая: содержание талька — {talc_percent:.1f}%, "
+                f"преобладание тонких срастаний — {fine_prevalence:.1f}%. "
+                f"Содержание талька в норме, но преобладают разрушенные тонкие срастания сульфидов."
+            )
+            
+    overlay = create_overlay(img_bgr, talc_mask, ordinary_mask, fine_mask, ann_mask)
+    
+    return DetectionResult(
+        talc_mask=talc_mask,
+        sulfide_ordinary_mask=ordinary_mask,
+        sulfide_fine_mask=fine_mask,
+        annotation_mask=ann_mask,
+        talc_fraction=talc_fraction,
+        talc_percent=talc_percent,
+        sulfide_ordinary_percent=ordinary_percent,
+        sulfide_fine_percent=fine_percent,
+        fine_prevalence_percent=fine_prevalence,
+        ore_class=ore_class,
+        ore_class_en=ore_class_en,
+        conclusion=conclusion,
+        overlay=overlay
+    )

@@ -1,0 +1,30 @@
+# Виртуальное окружение
+venv/
+.venv/
+env/
+
+# Кэш Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Папки с исходными данными и картинками (слишком тяжелые)
+Задача 3. Скажи мне, кто твой шлиф/
+images/
+images2/
+augmented/
+masks/
+
+# Временные системные файлы
+.DS_Store
+Thumbs.db
+
+# Конфигурации сред разработки
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.swp

@@ -1,0 +1,152 @@
+[
+  {
+    "file": "2550374-2 10х.JPG",
+    "shape": [
+      1704,
+      2272,
+      3
+    ],
+    "total_pixels": 3871488,
+    "blue_annotation_pixels": 133440,
+    "blue_fraction_pct": 3.447,
+    "talc_matrix_pixels": 2077925,
+    "talc_matrix_fraction_pct": 53.7,
+    "sulfide_pixels": 784380,
+    "sulfide_fraction_pct": 20.3
+  },
+  {
+    "file": "2550375-1 10х.JPG",
+    "shape": [
+      1704,
+      2272,
+      3
+    ],
+    "total_pixels": 3871488,
+    "blue_annotation_pixels": 151687,
+    "blue_fraction_pct": 3.918,
+    "talc_matrix_pixels": 872822,
+    "talc_matrix_fraction_pct": 22.5,
+    "sulfide_pixels": 1771227,
+    "sulfide_fraction_pct": 45.8
+  },
+  {
+    "file": "2550375-3 5х.JPG",
+    "shape": [
+      1704,
+      2272,
+      3
+    ],
+    "total_pixels": 3871488,
+    "blue_annotation_pixels": 144704,
+    "blue_fraction_pct": 3.738,
+    "talc_matrix_pixels": 1459904,
+    "talc_matrix_fraction_pct": 37.7,
+    "sulfide_pixels": 813668,
+    "sulfide_fraction_pct": 21.0
+  },
+  {
+    "file": "2550376-1 5x.JPG",
+    "shape": [
+      1704,
+      2272,
+      3
+    ],
+    "total_pixels": 3871488,
+    "blue_annotation_pixels": 110437,
+    "blue_fraction_pct": 2.853,
+    "talc_matrix_pixels": 1575922,
+    "talc_matrix_fraction_pct": 40.7,
+    "sulfide_pixels": 1201472,
+    "sulfide_fraction_pct": 31.0
+  },
+  {
+    "file": "2550376-2 10x.JPG",
+    "shape": [
+      1704,
+      2272,
+      3
+    ],
+    "total_pixels": 3871488,
+    "blue_annotation_pixels": 64342,
+    "blue_fraction_pct": 1.662,
+    "talc_matrix_pixels": 2332481,
+    "talc_matrix_fraction_pct": 60.2,
+    "sulfide_pixels": 226442,
+    "sulfide_fraction_pct": 5.8
+  },
+  {
+    "file": "2550377-1 5x.JPG",
+    "shape": [
+      1704,
+      2272,
+      3
+    ],
+    "total_pixels": 3871488,
+    "blue_annotation_pixels": 45534,
+    "blue_fraction_pct": 1.176,
+    "talc_matrix_pixels": 991482,
+    "talc_matrix_fraction_pct": 25.6,
+    "sulfide_pixels": 612608,
+    "sulfide_fraction_pct": 15.8
+  },
+  {
+    "file": "2550378-1 5x.JPG",
+    "shape": [
+      1704,
+      2272,
+      3
+    ],
+    "total_pixels": 3871488,
+    "blue_annotation_pixels": 232987,
+    "blue_fraction_pct": 6.018,
+    "talc_matrix_pixels": 319058,
+    "talc_matrix_fraction_pct": 8.2,
+    "sulfide_pixels": 287545,
+    "sulfide_fraction_pct": 7.4
+  },
+  {
+    "file": "2550381-1 10x.JPG",
+    "shape": [
+      1704,
+      2272,
+      3
+    ],
+    "total_pixels": 3871488,
+    "blue_annotation_pixels": 45253,
+    "blue_fraction_pct": 1.169,
+    "talc_matrix_pixels": 2287833,
+    "talc_matrix_fraction_pct": 59.1,
+    "sulfide_pixels": 564991,
+    "sulfide_fraction_pct": 14.6
+  },
+  {
+    "file": "2550381-2 10x.JPG",
+    "shape": [
+      1704,
+      2272,
+      3
+    ],
+    "total_pixels": 3871488,
+    "blue_annotation_pixels": 69032,
+    "blue_fraction_pct": 1.783,
+    "talc_matrix_pixels": 1894855,
+    "talc_matrix_fraction_pct": 48.9,
+    "sulfide_pixels": 456599,
+    "sulfide_fraction_pct": 11.8
+  },
+  {
+    "file": "2550382-1 10x.JPG",
+    "shape": [
+      1704,
+      2272,
+      3
+    ],
+    "total_pixels": 3871488,
+    "blue_annotation_pixels": 173459,
+    "blue_fraction_pct": 4.48,
+    "talc_matrix_pixels": 2341991,
+    "talc_matrix_fraction_pct": 60.5,
+    "sulfide_pixels": 467129,
+    "sulfide_fraction_pct": 12.1
+  }
+]

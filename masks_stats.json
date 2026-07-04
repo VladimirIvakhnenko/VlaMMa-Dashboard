@@ -1,0 +1,402 @@
+[
+  {
+    "xml_source": "annotations.xml",
+    "id": "0",
+    "name": "2550374-2 10х.JPG",
+    "size": "2272x1704",
+    "polygons": 0,
+    "rle_masks": 0,
+    "talc_pct": 0.0,
+    "mask_saved": "masks\\2550374-2 10х.png"
+  },
+  {
+    "xml_source": "annotations.xml",
+    "id": "1",
+    "name": "2550375-1 10х.JPG",
+    "size": "2272x1704",
+    "polygons": 0,
+    "rle_masks": 0,
+    "talc_pct": 0.0,
+    "mask_saved": "masks\\2550375-1 10х.png"
+  },
+  {
+    "xml_source": "annotations.xml",
+    "id": "2",
+    "name": "2550375-3 5х.JPG",
+    "size": "2272x1704",
+    "polygons": 0,
+    "rle_masks": 0,
+    "talc_pct": 0.0,
+    "mask_saved": "masks\\2550375-3 5х.png"
+  },
+  {
+    "xml_source": "annotations.xml",
+    "id": "3",
+    "name": "2550376-1 5x.JPG",
+    "size": "2272x1704",
+    "polygons": 0,
+    "rle_masks": 0,
+    "talc_pct": 0.0,
+    "mask_saved": "masks\\2550376-1 5x.png"
+  },
+  {
+    "xml_source": "annotations.xml",
+    "id": "4",
+    "name": "2550376-2 10x.JPG",
+    "size": "2272x1704",
+    "polygons": 0,
+    "rle_masks": 0,
+    "talc_pct": 0.0,
+    "mask_saved": "masks\\2550376-2 10x.png"
+  },
+  {
+    "xml_source": "annotations.xml",
+    "id": "5",
+    "name": "2550377-1 5x.JPG",
+    "size": "2272x1704",
+    "polygons": 0,
+    "rle_masks": 0,
+    "talc_pct": 0.0,
+    "mask_saved": "masks\\2550377-1 5x.png"
+  },
+  {
+    "xml_source": "annotations.xml",
+    "id": "6",
+    "name": "2550378-1 5x.JPG",
+    "size": "2272x1704",
+    "polygons": 18,
+    "rle_masks": 6,
+    "talc_pct": 40.53,
+    "mask_saved": "masks\\2550378-1 5x.png"
+  },
+  {
+    "xml_source": "annotations.xml",
+    "id": "7",
+    "name": "2550381-1 10x.JPG",
+    "size": "2272x1704",
+    "polygons": 2,
+    "rle_masks": 0,
+    "talc_pct": 4.21,
+    "mask_saved": "masks\\2550381-1 10x.png"
+  },
+  {
+    "xml_source": "annotations.xml",
+    "id": "8",
+    "name": "2550381-2 10x.JPG",
+    "size": "2272x1704",
+    "polygons": 11,
+    "rle_masks": 1,
+    "talc_pct": 11.43,
+    "mask_saved": "masks\\2550381-2 10x.png"
+  },
+  {
+    "xml_source": "annotations.xml",
+    "id": "9",
+    "name": "2550382-1 10x.JPG",
+    "size": "2272x1704",
+    "polygons": 15,
+    "rle_masks": 2,
+    "talc_pct": 38.5,
+    "mask_saved": "masks\\2550382-1 10x.png"
+  },
+  {
+    "xml_source": "annotations.xml",
+    "id": "10",
+    "name": "DSCN3042.JPG",
+    "size": "2272x1704",
+    "polygons": 0,
+    "rle_masks": 0,
+    "talc_pct": 0.0,
+    "mask_saved": "masks\\DSCN3042.png"
+  },
+  {
+    "xml_source": "annotations.xml",
+    "id": "11",
+    "name": "DSCN3048.JPG",
+    "size": "2272x1704",
+    "polygons": 0,
+    "rle_masks": 0,
+    "talc_pct": 0.0,
+    "mask_saved": "masks\\DSCN3048.png"
+  },
+  {
+    "xml_source": "annotations.xml",
+    "id": "12",
+    "name": "DSCN3051.JPG",
+    "size": "2272x1704",
+    "polygons": 0,
+    "rle_masks": 0,
+    "talc_pct": 0.0,
+    "mask_saved": "masks\\DSCN3051.png"
+  },
+  {
+    "xml_source": "annotations.xml",
+    "id": "13",
+    "name": "DSCN3052.JPG",
+    "size": "2272x1704",
+    "polygons": 0,
+    "rle_masks": 0,
+    "talc_pct": 0.0,
+    "mask_saved": "masks\\DSCN3052.png"
+  },
+  {
+    "xml_source": "annotations.xml",
+    "id": "14",
+    "name": "DSCN3053.JPG",
+    "size": "2272x1704",
+    "polygons": 0,
+    "rle_masks": 0,
+    "talc_pct": 0.0,
+    "mask_saved": "masks\\DSCN3053.png"
+  },
+  {
+    "xml_source": "annotations1.xml",
+    "id": "0",
+    "name": "150_.jpg",
+    "size": "4160x2768",
+    "polygons": 25,
+    "rle_masks": 1,
+    "talc_pct": 7.73,
+    "mask_saved": "masks\\150_.png"
+  },
+  {
+    "xml_source": "annotations1.xml",
+    "id": "1",
+    "name": "152_.jpg",
+    "size": "4160x2768",
+    "polygons": 0,
+    "rle_masks": 0,
+    "talc_pct": 0.0,
+    "mask_saved": "masks\\152_.png"
+  },
+  {
+    "xml_source": "annotations1.xml",
+    "id": "2",
+    "name": "155_.jpg",
+    "size": "4160x2768",
+    "polygons": 0,
+    "rle_masks": 0,
+    "talc_pct": 0.0,
+    "mask_saved": "masks\\155_.png"
+  },
+  {
+    "xml_source": "annotations1.xml",
+    "id": "3",
+    "name": "158_.jpg",
+    "size": "4160x2768",
+    "polygons": 0,
+    "rle_masks": 0,
+    "talc_pct": 0.0,
+    "mask_saved": "masks\\158_.png"
+  },
+  {
+    "xml_source": "annotations1.xml",
+    "id": "4",
+    "name": "161_.jpg",
+    "size": "4160x2768",
+    "polygons": 0,
+    "rle_masks": 0,
+    "talc_pct": 0.0,
+    "mask_saved": "masks\\161_.png"
+  },
+  {
+    "xml_source": "annotations1.xml",
+    "id": "5",
+    "name": "1822101 1.jpg",
+    "size": "852x495",
+    "polygons": 30,
+    "rle_masks": 1,
+    "talc_pct": 25.42,
+    "mask_saved": "masks\\1822101 1.png"
+  },
+  {
+    "xml_source": "annotations1.xml",
+    "id": "6",
+    "name": "1822101 2.jpg",
+    "size": "845x506",
+    "polygons": 0,
+    "rle_masks": 0,
+    "talc_pct": 0.0,
+    "mask_saved": "masks\\1822101 2.png"
+  },
+  {
+    "xml_source": "annotations1.xml",
+    "id": "7",
+    "name": "1822101 3.jpg",
+    "size": "891x552",
+    "polygons": 0,
+    "rle_masks": 0,
+    "talc_pct": 0.0,
+    "mask_saved": "masks\\1822101 3.png"
+  },
+  {
+    "xml_source": "annotations1.xml",
+    "id": "8",
+    "name": "1822101.jpg",
+    "size": "891x545",
+    "polygons": 0,
+    "rle_masks": 0,
+    "talc_pct": 0.0,
+    "mask_saved": "masks\\1822101.png"
+  },
+  {
+    "xml_source": "annotations1.xml",
+    "id": "9",
+    "name": "1822215 2.jpg",
+    "size": "1220x824",
+    "polygons": 0,
+    "rle_masks": 0,
+    "talc_pct": 0.0,
+    "mask_saved": "masks\\1822215 2.png"
+  },
+  {
+    "xml_source": "annotations1.xml",
+    "id": "10",
+    "name": "1822215 3 .jpg",
+    "size": "1032x647",
+    "polygons": 35,
+    "rle_masks": 3,
+    "talc_pct": 19.81,
+    "mask_saved": "masks\\1822215 3 .png"
+  },
+  {
+    "xml_source": "annotations1.xml",
+    "id": "11",
+    "name": "1907294 1.jpg",
+    "size": "2419x1777",
+    "polygons": 0,
+    "rle_masks": 0,
+    "talc_pct": 0.0,
+    "mask_saved": "masks\\1907294 1.png"
+  },
+  {
+    "xml_source": "annotations1.xml",
+    "id": "12",
+    "name": "1907296.jpg",
+    "size": "2671x1682",
+    "polygons": 16,
+    "rle_masks": 0,
+    "talc_pct": 8.77,
+    "mask_saved": "masks\\1907296.png"
+  },
+  {
+    "xml_source": "annotations1.xml",
+    "id": "13",
+    "name": "2122682 1.jpg",
+    "size": "2963x1860",
+    "polygons": 0,
+    "rle_masks": 0,
+    "talc_pct": 0.0,
+    "mask_saved": "masks\\2122682 1.png"
+  },
+  {
+    "xml_source": "annotations1.xml",
+    "id": "14",
+    "name": "41.jpg",
+    "size": "4160x2768",
+    "polygons": 85,
+    "rle_masks": 0,
+    "talc_pct": 15.74,
+    "mask_saved": "masks\\41.png"
+  },
+  {
+    "xml_source": "annotations1.xml",
+    "id": "15",
+    "name": "48.jpg",
+    "size": "4160x2768",
+    "polygons": 50,
+    "rle_masks": 0,
+    "talc_pct": 9.5,
+    "mask_saved": "masks\\48.png"
+  },
+  {
+    "xml_source": "annotations2.xml",
+    "id": "0",
+    "name": "-42.jpg",
+    "size": "4160x2768",
+    "polygons": 43,
+    "rle_masks": 0,
+    "talc_pct": 27.57,
+    "mask_saved": "masks\\-42.png"
+  },
+  {
+    "xml_source": "annotations2.xml",
+    "id": "1",
+    "name": "-44.jpg",
+    "size": "4160x2768",
+    "polygons": 0,
+    "rle_masks": 0,
+    "talc_pct": 0.0,
+    "mask_saved": "masks\\-44.png"
+  },
+  {
+    "xml_source": "annotations2.xml",
+    "id": "2",
+    "name": "-47.jpg",
+    "size": "4160x2768",
+    "polygons": 0,
+    "rle_masks": 0,
+    "talc_pct": 0.0,
+    "mask_saved": "masks\\-47.png"
+  },
+  {
+    "xml_source": "annotations2.xml",
+    "id": "3",
+    "name": "150_.jpg",
+    "size": "4160x2768",
+    "polygons": 0,
+    "rle_masks": 0,
+    "talc_pct": 0.0,
+    "mask_saved": "masks\\150_.png"
+  },
+  {
+    "xml_source": "annotations2.xml",
+    "id": "4",
+    "name": "155_.jpg",
+    "size": "4160x2768",
+    "polygons": 0,
+    "rle_masks": 0,
+    "talc_pct": 0.0,
+    "mask_saved": "masks\\155_.png"
+  },
+  {
+    "xml_source": "annotations2.xml",
+    "id": "5",
+    "name": "162_.jpg",
+    "size": "4160x2768",
+    "polygons": 0,
+    "rle_masks": 0,
+    "talc_pct": 0.0,
+    "mask_saved": "masks\\162_.png"
+  },
+  {
+    "xml_source": "annotations2.xml",
+    "id": "6",
+    "name": "DSCN4273.JPG",
+    "size": "1612x1024",
+    "polygons": 10,
+    "rle_masks": 0,
+    "talc_pct": 10.0,
+    "mask_saved": "masks\\DSCN4273.png"
+  },
+  {
+    "xml_source": "annotations2.xml",
+    "id": "7",
+    "name": "DSCN4290.JPG",
+    "size": "2272x1704",
+    "polygons": 49,
+    "rle_masks": 4,
+    "talc_pct": 20.55,
+    "mask_saved": "masks\\DSCN4290.png"
+  },
+  {
+    "xml_source": "annotations2.xml",
+    "id": "8",
+    "name": "DSCN4719.JPG",
+    "size": "2272x1704",
+    "polygons": 20,
+    "rle_masks": 1,
+    "talc_pct": 26.78,
+    "mask_saved": "masks\\DSCN4719.png"
+  }
+]
