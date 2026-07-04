@@ -1,8 +1,21 @@
-opencv-python>=4.8.0
-scikit-image>=0.21.0
-numpy>=1.24.0
-matplotlib>=3.7.0
-streamlit>=1.28.0
+# Core
+streamlit==1.39.0
+numpy>=1.26.0
+pandas>=2.1.0
 Pillow>=10.0.0
+
+# Computer Vision
+opencv-python-headless>=4.8.0
+scikit-image>=0.22.0
 scipy>=1.11.0
-pandas>=2.0.0
+
+# Визуализация
+matplotlib>=3.8.0
+
+# Экспорт
+pyarrow>=14.0.0
+
+# Опционально: для UNet
+# torch>=2.1.0
+# torchvision>=0.16.0
+# segmentation-models-pytorch>=0.3.3
