@@ -2,3 +2,4 @@
 2026-07-05 05:45:16,669 - INFO - File: DSCN7418.JPG | Resolution: 2272x1704 | Talc: 26.68% | Ordinary Sulfides: 1.20% | Fine Sulfides: 8.12% | Fine Prevalence: 87.15% | Verdict: Оталькованная руда
 2026-07-05 05:54:58,107 - INFO - File: deepseek_svg_20260704_09952b_1_-removebg-preview.png | Resolution: 612x408 | Talc: 2.58% | Ordinary Sulfides: 35.37% | Fine Sulfides: 0.25% | Fine Prevalence: 0.70% | Verdict: Рядовая руда
 2026-07-05 05:55:11,335 - INFO - File: DSCN3048.JPG | Resolution: 2272x1704 | Talc: 26.97% | Ordinary Sulfides: 4.96% | Fine Sulfides: 9.15% | Fine Prevalence: 64.83% | Verdict: Оталькованная руда
+2026-07-05 05:55:24,516 - INFO - File: 2550378-1 5x.JPG | Resolution: 2272x1704 | Talc: 30.91% | Ordinary Sulfides: 0.00% | Fine Sulfides: 17.49% | Fine Prevalence: 100.00% | Verdict: Оталькованная руда
