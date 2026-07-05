@@ -6,6 +6,8 @@ import torch
 import segmentation_models_pytorch as smp
 import logging
 import os
+import time
+import atexit
 
 torch.set_num_threads(int(os.environ.get("TORCH_NUM_THREADS", "4")))
 
@@ -20,6 +22,23 @@ MODEL_PATH = "best_unet_model.pth"
 TILE_SIZE = 512
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 PROBS_THRESHOLD = 0.35
+
+if DEVICE.type == "cuda":
+    gpu_name = torch.cuda.get_device_name(0)
+    gpu_mem = torch.cuda.get_device_properties(0).total_memory / 1024**3
+    device_msg = f"Device: {DEVICE} | GPU: {gpu_name} | VRAM: {gpu_mem:.1f} GB"
+else:
+    device_msg = "Device: CPU (GPU not available)"
+
+logging.info(device_msg)
+print(device_msg)
+
+def _cleanup_gpu():
+    if DEVICE.type == "cuda":
+        torch.cuda.empty_cache()
+        torch.cuda.ipc_collect()
+
+atexit.register(_cleanup_gpu)
 
 _MODEL_INSTANCE = None
 
@@ -60,27 +79,24 @@ def get_model():
         _MODEL_INSTANCE = model
     return _MODEL_INSTANCE
 
+BATCH_SIZE = 8  # количество тайлов в батче для GPU
+
 def predict_patch(model, patch_rgb) -> np.ndarray:
     x = patch_rgb.astype(np.float32) / 255.0
     x = np.transpose(x, (2, 0, 1))
 
-    x_orig = torch.tensor(x).unsqueeze(0).to(DEVICE)
-    x_hflip = torch.flip(x_orig, dims=[3])
+    x_tensor = torch.tensor(x).unsqueeze(0).to(DEVICE)
     del x
 
     with torch.no_grad():
-        pred_orig = torch.sigmoid(model(x_orig))
-        del x_orig
-        pred_hflip = torch.flip(torch.sigmoid(model(x_hflip)), dims=[3])
-        del x_hflip
-        pred = (pred_orig + pred_hflip) / 2.0
-        del pred_orig, pred_hflip
+        pred = torch.sigmoid(model(x_tensor))
+        del x_tensor
 
     result = pred.squeeze().cpu().numpy()
     del pred
     return result
 
-def predict_tiled(model, img_rgb, step=128) -> np.ndarray:
+def predict_tiled(model, img_rgb, step=256) -> np.ndarray:
     h, w = img_rgb.shape[:2]
 
     pad_h = (TILE_SIZE - h % TILE_SIZE) % TILE_SIZE
@@ -203,18 +219,24 @@ def analyze_image(img_bgr: np.ndarray, filename: str = "unknown") -> DetectionRe
 
     model = get_model()
 
+    t_start = time.time()
     if max(h, w) > 1024:
-        probs = predict_tiled(model, img_rgb, step=128)
+        probs = predict_tiled(model, img_rgb, step=256)
     else:
         img_resized = cv2.resize(img_rgb, (TILE_SIZE, TILE_SIZE))
         probs_resized = predict_patch(model, img_resized)
         probs = cv2.resize(probs_resized, (w, h), interpolation=cv2.INTER_LINEAR)
 
+    t_seg = time.time() - t_start
+    logging.info(f"Segmentation time: {t_seg:.2f}s | Tiles: {((w + 255) // 256) * ((h + 255) // 256)} | Device: {DEVICE}")
+
     del img_rgb
+    t_post = time.time()
     talc_mask = (probs > PROBS_THRESHOLD).astype(np.uint8) * 255
     del probs
     ordinary_mask, fine_mask = detect_and_classify_sulfides(img_bgr)
     ann_mask = extract_annotation_mask(img_bgr)
+    logging.info(f"Post-processing time: {time.time() - t_post:.2f}s")
 
     total_pixels = h * w
     talc_pixels = int((talc_mask > 0).sum())

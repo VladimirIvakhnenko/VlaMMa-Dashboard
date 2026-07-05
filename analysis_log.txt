@@ -3,3 +3,35 @@
 2026-07-05 05:54:58,107 - INFO - File: deepseek_svg_20260704_09952b_1_-removebg-preview.png | Resolution: 612x408 | Talc: 2.58% | Ordinary Sulfides: 35.37% | Fine Sulfides: 0.25% | Fine Prevalence: 0.70% | Verdict: Рядовая руда
 2026-07-05 05:55:11,335 - INFO - File: DSCN3048.JPG | Resolution: 2272x1704 | Talc: 26.97% | Ordinary Sulfides: 4.96% | Fine Sulfides: 9.15% | Fine Prevalence: 64.83% | Verdict: Оталькованная руда
 2026-07-05 05:55:24,516 - INFO - File: 2550378-1 5x.JPG | Resolution: 2272x1704 | Talc: 30.91% | Ordinary Sulfides: 0.00% | Fine Sulfides: 17.49% | Fine Prevalence: 100.00% | Verdict: Оталькованная руда
+2026-07-05 12:48:14,545 - INFO - File: DSCN7418.JPG | Resolution: 2272x1704 | Talc: 26.68% | Ordinary Sulfides: 1.20% | Fine Sulfides: 8.12% | Fine Prevalence: 87.15% | Verdict: Оталькованная руда
+2026-07-05 12:53:54,814 - INFO - Device selected: cuda
+2026-07-05 12:54:41,235 - INFO - Device selected: cuda
+2026-07-05 12:54:41,236 - INFO - GPU: NVIDIA GeForce GTX 1650 | VRAM: 3.6 GB
+2026-07-05 12:55:24,907 - INFO - File: 1907294 1.jpg | Resolution: 2419x1777 | Talc: 9.55% | Ordinary Sulfides: 8.62% | Fine Sulfides: 3.56% | Fine Prevalence: 29.23% | Verdict: Рядовая руда
+2026-07-05 12:56:50,891 - INFO - Device: cuda | GPU: NVIDIA GeForce GTX 1650 | VRAM: 3.6 GB
+2026-07-05 13:00:57,468 - INFO - File: 101_.jpg | Resolution: 4160x2768 | Talc: 3.33% | Ordinary Sulfides: 3.65% | Fine Sulfides: 3.98% | Fine Prevalence: 52.12% | Verdict: Труднообогатимая руда
+2026-07-05 13:05:10,388 - INFO - Device: cuda | GPU: NVIDIA GeForce GTX 1650 | VRAM: 3.6 GB
+2026-07-05 13:16:15,526 - INFO - Segmentation time: 653.37s | Tiles: 9576 | Device: cuda
+2026-07-05 13:21:24,418 - INFO - Device: cuda | GPU: NVIDIA GeForce GTX 1650 | VRAM: 3.6 GB
+2026-07-05 13:21:50,892 - INFO - Segmentation time: 16.20s | Tiles: 357 | Device: cuda
+2026-07-05 13:21:52,207 - INFO - File: 2652980 10x 2.JPG | Resolution: 2272x1704 | Talc: 1.32% | Ordinary Sulfides: 0.00% | Fine Sulfides: 7.29% | Fine Prevalence: 100.00% | Verdict: Труднообогатимая руда
+2026-07-05 13:27:08,022 - INFO - Device: cuda | GPU: NVIDIA GeForce GTX 1650 | VRAM: 3.6 GB
+2026-07-05 13:27:25,707 - INFO - Segmentation time: 6.92s | Tiles: 357 | Device: cuda
+2026-07-05 13:27:27,016 - INFO - File: 2652980 10x 2.JPG | Resolution: 2272x1704 | Talc: 1.31% | Ordinary Sulfides: 0.00% | Fine Sulfides: 7.29% | Fine Prevalence: 100.00% | Verdict: Труднообогатимая руда
+2026-07-05 13:28:11,749 - INFO - Segmentation time: 21.45s | Tiles: 900 | Device: cuda
+2026-07-05 13:28:13,918 - INFO - File: 101_.jpg | Resolution: 4160x2768 | Talc: 3.18% | Ordinary Sulfides: 3.65% | Fine Sulfides: 3.98% | Fine Prevalence: 52.12% | Verdict: Труднообогатимая руда
+2026-07-05 13:34:46,209 - INFO - Segmentation time: 276.73s | Tiles: 9576 | Device: cuda
+2026-07-05 13:36:38,389 - INFO - File: 12.jpg | Resolution: 14113x10339 | Talc: 11.58% | Ordinary Sulfides: 0.00% | Fine Sulfides: 0.16% | Fine Prevalence: 100.00% | Verdict: Оталькованная руда
+2026-07-05 13:43:57,489 - INFO - Device: cuda | GPU: NVIDIA GeForce GTX 1650 | VRAM: 3.6 GB
+2026-07-05 13:45:18,195 - INFO - Segmentation time: 70.76s | Tiles: 2296 | Device: cuda
+2026-07-05 13:47:22,281 - INFO - Post-processing time: 124.08s
+2026-07-05 13:47:24,458 - INFO - File: 12.jpg | Resolution: 14113x10339 | Talc: 11.62% | Ordinary Sulfides: 0.00% | Fine Sulfides: 0.16% | Fine Prevalence: 100.00% | Verdict: Оталькованная руда
+2026-07-05 13:53:00,643 - INFO - Segmentation time: 1.95s | Tiles: 63 | Device: cuda
+2026-07-05 13:53:01,049 - INFO - Post-processing time: 0.41s
+2026-07-05 13:53:01,120 - INFO - File: DSCN7418.JPG | Resolution: 2272x1704 | Talc: 23.85% | Ordinary Sulfides: 1.20% | Fine Sulfides: 8.12% | Fine Prevalence: 87.15% | Verdict: Оталькованная руда
+2026-07-05 13:54:36,501 - INFO - Segmentation time: 1.95s | Tiles: 63 | Device: cuda
+2026-07-05 13:54:37,065 - INFO - Post-processing time: 0.56s
+2026-07-05 13:54:37,133 - INFO - File: 2550496-1 20x.JPG | Resolution: 2272x1704 | Talc: 4.92% | Ordinary Sulfides: 22.21% | Fine Sulfides: 6.83% | Fine Prevalence: 23.51% | Verdict: Рядовая руда
+2026-07-05 13:55:08,825 - INFO - Segmentation time: 5.81s | Tiles: 187 | Device: cuda
+2026-07-05 13:55:09,398 - INFO - Post-processing time: 0.57s
+2026-07-05 13:55:09,540 - INFO - File: -36.jpg | Resolution: 4160x2768 | Talc: 9.09% | Ordinary Sulfides: 0.00% | Fine Sulfides: 0.11% | Fine Prevalence: 100.00% | Verdict: Труднообогатимая руда
