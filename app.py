@@ -385,49 +385,49 @@ with tab_single:
         )
 
 with tab_batch:
-    st.subheader("📂 Пакетная обработка папок")
-    st.info("Укажите путь к папке с изображениями для автоматической обработки всех файлов.")
+    st.subheader("📂 Пакетная обработка")
+    st.info("Загрузите несколько изображений для автоматической обработки.")
 
-    folder_path = st.text_input(
-        "Путь к папке на компьютере",
-        placeholder="C:\\Users\\...\\Фото руд",
-        help="Будут обработаны все JPG/PNG/TIFF файлы в папке"
+    uploaded_files = st.file_uploader(
+        "Загрузите изображения шлифов",
+        type=["jpg", "jpeg", "png", "tiff", "tif", "bmp"],
+        accept_multiple_files=True,
+        help="Можно выбрать несколько файлов одновременно (Ctrl+click)"
     )
 
-    if folder_path and os.path.isdir(folder_path):
-        folder = Path(folder_path)
-        img_files = (
-            list(folder.glob("*.jpg")) +
-            list(folder.glob("*.JPG")) +
-            list(folder.glob("*.png")) +
-            list(folder.glob("*.PNG")) +
-            list(folder.glob("*.tiff")) +
-            list(folder.glob("*.TIFF"))
-        )
-        st.success(f"Найдено {len(img_files)} изображений")
+    if uploaded_files:
+        st.success(f"Загружено файлов: {len(uploaded_files)}")
 
-        if img_files and st.button("🚀 Обработать все", type="primary"):
+        if st.button("🚀 Обработать все", type="primary"):
             results_list = []
             progress_bar = st.progress(0, text="Обработка...")
             status_text = st.empty()
 
-            for i, img_path in enumerate(img_files):
-                status_text.text(f"Обрабатываем: {img_path.name} ({i+1}/{len(img_files)})")
+            for i, up_file in enumerate(uploaded_files):
+                status_text.text(f"Обрабатываем: {up_file.name} ({i+1}/{len(uploaded_files)})")
                 try:
-                    img_bgr = cv2.imread(str(img_path))
+                    file_bytes = np.asarray(bytearray(up_file.read()), dtype=np.uint8)
+                    img_bgr = cv2.imdecode(file_bytes, cv2.IMREAD_COLOR)
+                    del file_bytes
                     if img_bgr is None:
+                        results_list.append({
+                            "Файл": up_file.name,
+                            "Класс руды": "ОШИБКА",
+                            "Доля талька (%)": "-",
+                            "Вывод": "Не удалось декодировать",
+                        })
                         continue
                     h, w = img_bgr.shape[:2]
                     if max(h, w) > MAX_DIMENSION:
                         results_list.append({
-                            "Файл": img_path.name,
+                            "Файл": up_file.name,
                             "Класс руды": "ПРОПУСК",
                             "Доля талька (%)": "-",
                             "Вывод": f"Слишком большое ({w}x{h})",
                         })
                         del img_bgr
                         continue
-                    result = analyze_image(img_bgr, filename=img_path.name)
+                    result = analyze_image(img_bgr, filename=up_file.name)
                     del img_bgr
 
                     talc_mm2 = calculate_physical_area(result.talc_area_px, um_per_pixel)
@@ -435,7 +435,7 @@ with tab_batch:
                     fine_mm2 = calculate_physical_area(result.fine_area_px, um_per_pixel)
 
                     results_list.append({
-                        "Файл": img_path.name,
+                        "Файл": up_file.name,
                         "Класс руды": result.ore_class,
                         "Доля талька (%)": f"{result.talc_percent:.2f}",
                         "Площадь талька (мм²)": f"{talc_mm2:.4f}",
@@ -449,12 +449,12 @@ with tab_batch:
                     del result
                 except Exception as e:
                     results_list.append({
-                        "Файл": img_path.name,
+                        "Файл": up_file.name,
                         "Класс руды": "ОШИБКА",
                         "Доля талька (%)": "-",
                         "Вывод": str(e),
                     })
-                progress_bar.progress((i + 1) / len(img_files))
+                progress_bar.progress((i + 1) / len(uploaded_files))
 
             status_text.text("✅ Готово!")
             st.dataframe(results_list, use_container_width=True)
@@ -470,8 +470,6 @@ with tab_batch:
                     file_name="batch_results.csv",
                     mime="text/csv"
                 )
-    elif folder_path:
-        st.error(f"Папка не найдена: {folder_path}")
 
 with tab_about:
     st.subheader("О системе автоматического минералогического анализа")

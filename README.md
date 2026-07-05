@@ -37,6 +37,32 @@
 
 ## 3. Инструкция по запуску
 
+### Docker (рекомендуется)
+
+#### Требования
+- [Docker](https://docs.docker.com/get-docker/) 20.10+
+- [Docker Compose](https://docs.docker.com/compose/install/) v2+
+- Файл весов модели `best_unet_model.pth` в корне проекта
+
+#### Запуск (CPU)
+```bash
+docker compose up app
+```
+
+#### Запуск (GPU, требует [NVIDIA Container Toolkit](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/install-guide.html))
+```bash
+docker compose up gpu
+```
+
+Приложение будет доступно по адресу: http://localhost:8501
+
+#### Остановка
+```bash
+docker compose down
+```
+
+---
+
 ### Установка зависимостей
 Убедитесь, что у вас установлен Python версии 3.10 или выше. Установите необходимые библиотеки:
 ```bash
@@ -93,3 +119,6 @@ python calibrate.py
 * evaluate_classification.py: Быстрая валидация точности классификации руд.
 * calibrate.py: Скрипт подбора оптимальных геометрических порогов эрозии.
 * requirements.txt: Список используемых зависимостей.
+* Dockerfile: Конфигурация контейнера приложения.
+* docker-compose.yml: Конфигурация сборки (CPU и GPU варианты).
+* .dockerignore: Файлы, исключённые из сборки Docker-образа.

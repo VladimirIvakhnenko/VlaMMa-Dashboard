@@ -1,0 +1,28 @@
+services:
+  app:
+    build: .
+    ports:
+      - "8501:8501"
+    volumes:
+      - ./best_unet_model.pth:/app/best_unet_model.pth:ro
+    environment:
+      - PYTHONUNBUFFERED=1
+    restart: unless-stopped
+
+  gpu:
+    build: .
+    ports:
+      - "8501:8501"
+    volumes:
+      - ./best_unet_model.pth:/app/best_unet_model.pth:ro
+    environment:
+      - PYTHONUNBUFFERED=1
+      - NVIDIA_VISIBLE_DEVICES=all
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+    restart: unless-stopped
