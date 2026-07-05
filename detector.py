@@ -5,6 +5,9 @@ from pathlib import Path
 import torch
 import segmentation_models_pytorch as smp
 import logging
+import os
+
+torch.set_num_threads(int(os.environ.get("TORCH_NUM_THREADS", "4")))
 
 logging.basicConfig(
     filename="analysis_log.txt",
@@ -60,29 +63,33 @@ def get_model():
 def predict_patch(model, patch_rgb) -> np.ndarray:
     x = patch_rgb.astype(np.float32) / 255.0
     x = np.transpose(x, (2, 0, 1))
-    
+
     x_orig = torch.tensor(x).unsqueeze(0).to(DEVICE)
     x_hflip = torch.flip(x_orig, dims=[3])
-    
+    del x
+
     with torch.no_grad():
         pred_orig = torch.sigmoid(model(x_orig))
+        del x_orig
         pred_hflip = torch.flip(torch.sigmoid(model(x_hflip)), dims=[3])
+        del x_hflip
         pred = (pred_orig + pred_hflip) / 2.0
-        
-    return pred.squeeze().cpu().numpy()
+        del pred_orig, pred_hflip
+
+    result = pred.squeeze().cpu().numpy()
+    del pred
+    return result
 
 def predict_tiled(model, img_rgb, step=128) -> np.ndarray:
     h, w = img_rgb.shape[:2]
-    
+
     pad_h = (TILE_SIZE - h % TILE_SIZE) % TILE_SIZE
     pad_w = (TILE_SIZE - w % TILE_SIZE) % TILE_SIZE
-    
-    padded_img = cv2.copyMakeBorder(img_rgb, 0, pad_h, 0, pad_w, cv2.BORDER_REFLECT)
-    ph, pw = padded_img.shape[:2]
-    
+    ph, pw = h + pad_h, w + pad_w
+
     prob_map = np.zeros((ph, pw), dtype=np.float32)
     weight_map = np.zeros((ph, pw), dtype=np.float32)
-    
+
     y_coords, x_coords = np.indices((TILE_SIZE, TILE_SIZE))
     dist_to_edge = np.minimum(
         np.minimum(y_coords, TILE_SIZE - 1 - y_coords),
@@ -90,58 +97,77 @@ def predict_tiled(model, img_rgb, step=128) -> np.ndarray:
     )
     tile_weight = dist_to_edge.astype(np.float32) / (TILE_SIZE / 2)
     tile_weight = np.clip(tile_weight, 0.05, 1.0)
-    
+
     for y in range(0, ph - TILE_SIZE + 1, step):
         for x in range(0, pw - TILE_SIZE + 1, step):
-            patch = padded_img[y:y+TILE_SIZE, x:x+TILE_SIZE]
-            pred_patch = predict_patch(model, patch)
-            
-            prob_map[y:y+TILE_SIZE, x:x+TILE_SIZE] += pred_patch * tile_weight
-            weight_map[y:y+TILE_SIZE, x:x+TILE_SIZE] += tile_weight
-            
+            y_end = min(y + TILE_SIZE, h)
+            x_end = min(x + TILE_SIZE, w)
+            patch_h = y_end - y
+            patch_w = x_end - x
+
+            tile = np.zeros((TILE_SIZE, TILE_SIZE, 3), dtype=np.uint8)
+            tile[:patch_h, :patch_w] = img_rgb[y:y_end, x:x_end]
+
+            if patch_h < TILE_SIZE or patch_w < TILE_SIZE:
+                tile = cv2.copyMakeBorder(
+                    tile[:patch_h, :patch_w],
+                    0, TILE_SIZE - patch_h,
+                    0, TILE_SIZE - patch_w,
+                    cv2.BORDER_REFLECT
+                )
+
+            pred_patch = predict_patch(model, tile)
+
+            prob_map[y:y_end, x:x_end] += pred_patch[:patch_h, :patch_w] * tile_weight[:patch_h, :patch_w]
+            weight_map[y:y_end, x:x_end] += tile_weight[:patch_h, :patch_w]
+
     prob_map /= np.maximum(weight_map, 1e-5)
+    del weight_map
     return prob_map[:h, :w]
 
 def detect_and_classify_sulfides(img_bgr: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
     img_hsv = cv2.cvtColor(img_bgr, cv2.COLOR_BGR2HSV)
     h_chan, s_chan, v_chan = cv2.split(img_hsv)
-    
+    del img_hsv
+
     clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(8, 8))
     v_norm = clahe.apply(v_chan)
-    
+    del v_chan, h_chan, s_chan
+
     sulfide_mask = (v_norm > 165).astype(np.uint8) * 255
+    del v_norm
     kernel_open = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (3, 3))
     sulfide_mask = cv2.morphologyEx(sulfide_mask, cv2.MORPH_OPEN, kernel_open, iterations=1)
-    
+
     h, w = sulfide_mask.shape
     ordinary_mask = np.zeros((h, w), dtype=np.uint8)
     fine_mask = np.zeros((h, w), dtype=np.uint8)
-    
+
     k_size = int(max(h, w) * 0.025)
     if k_size % 2 == 0:
         k_size += 1
     k_size = max(5, k_size)
-    
+
     kernel_erode = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (k_size, k_size))
     eroded = cv2.erode(sulfide_mask, kernel_erode)
-    
+
     contours, _ = cv2.findContours(sulfide_mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-    
+    del sulfide_mask
+
+    contour_mask = np.zeros((h, w), dtype=np.uint8)
     for cnt in contours:
         area = cv2.contourArea(cnt)
         if area < 100:
             continue
-            
-        temp = np.zeros((h, w), dtype=np.uint8)
-        cv2.drawContours(temp, [cnt], -1, 255, -1)
-        
-        has_massive_core = np.any(np.logical_and(temp, eroded))
-        
-        if has_massive_core:
-            cv2.drawContours(ordinary_mask, [cnt], -1, 255, -1)
+
+        contour_mask[:] = 0
+        cv2.drawContours(contour_mask, [cnt], -1, 255, -1)
+
+        if np.any(np.logical_and(contour_mask, eroded)):
+            ordinary_mask[contour_mask > 0] = 255
         else:
-            cv2.drawContours(fine_mask, [cnt], -1, 255, -1)
-            
+            fine_mask[contour_mask > 0] = 255
+
     return ordinary_mask, fine_mask
 
 def extract_annotation_mask(img_bgr: np.ndarray) -> np.ndarray:
@@ -149,6 +175,7 @@ def extract_annotation_mask(img_bgr: np.ndarray) -> np.ndarray:
     lower = np.array([100, 100, 50])
     upper = np.array([130, 255, 255])
     mask = cv2.inRange(img_hsv, lower, upper)
+    del img_hsv
     return mask
 
 def create_overlay(img_bgr: np.ndarray,
@@ -158,52 +185,54 @@ def create_overlay(img_bgr: np.ndarray,
                    ann_mask: np.ndarray,
                    alpha: float = 0.45) -> np.ndarray:
     overlay = img_bgr.copy()
-    
+
     overlay[talc_mask > 0] = [255, 0, 0]
     overlay[ordinary_mask > 0] = [0, 200, 0]
     overlay[fine_mask > 0] = [0, 0, 220]
-    
-    result = cv2.addWeighted(img_bgr, 1 - alpha, overlay, alpha, 0)
-    
+
+    cv2.addWeighted(img_bgr, 1 - alpha, overlay, alpha, 0, dst=overlay)
+
     contours_talc, _ = cv2.findContours(talc_mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-    cv2.drawContours(result, contours_talc, -1, (255, 0, 0), 2)
-    
-    return result
+    cv2.drawContours(overlay, contours_talc, -1, (255, 0, 0), 2)
+
+    return overlay
 
 def analyze_image(img_bgr: np.ndarray, filename: str = "unknown") -> DetectionResult:
     h, w = img_bgr.shape[:2]
     img_rgb = cv2.cvtColor(img_bgr, cv2.COLOR_BGR2RGB)
-    
+
     model = get_model()
-    
+
     if max(h, w) > 1024:
         probs = predict_tiled(model, img_rgb, step=128)
     else:
         img_resized = cv2.resize(img_rgb, (TILE_SIZE, TILE_SIZE))
         probs_resized = predict_patch(model, img_resized)
         probs = cv2.resize(probs_resized, (w, h), interpolation=cv2.INTER_LINEAR)
-        
+
+    del img_rgb
     talc_mask = (probs > PROBS_THRESHOLD).astype(np.uint8) * 255
+    del probs
     ordinary_mask, fine_mask = detect_and_classify_sulfides(img_bgr)
     ann_mask = extract_annotation_mask(img_bgr)
-    
+
     total_pixels = h * w
     talc_pixels = int((talc_mask > 0).sum())
     ordinary_pixels = int((ordinary_mask > 0).sum())
     fine_pixels = int((fine_mask > 0).sum())
-    
+
     talc_fraction = float(talc_pixels) / total_pixels
     talc_percent = talc_fraction * 100
-    
+
     ordinary_percent = (float(ordinary_pixels) / total_pixels) * 100
     fine_percent = (float(fine_pixels) / total_pixels) * 100
-    
+
     total_sulfide_pixels = ordinary_pixels + fine_pixels
     if total_sulfide_pixels > 0:
         fine_prevalence = (float(fine_pixels) / total_sulfide_pixels) * 100
     else:
         fine_prevalence = 0.0
-        
+
     if talc_percent > 10.0:
         ore_class = "Оталькованная руда"
         ore_class_en = "talcified"
@@ -229,15 +258,15 @@ def analyze_image(img_bgr: np.ndarray, filename: str = "unknown") -> DetectionRe
                 f"преобладание тонких срастаний — {fine_prevalence:.1f}%. "
                 f"Содержание талька в норме, но преобладают разрушенные тонкие срастания сульфидов."
             )
-            
+
     overlay = create_overlay(img_bgr, talc_mask, ordinary_mask, fine_mask, ann_mask)
-    
+
     logging.info(
         f"File: {filename} | Resolution: {w}x{h} | Talc: {talc_percent:.2f}% | "
         f"Ordinary Sulfides: {ordinary_percent:.2f}% | Fine Sulfides: {fine_percent:.2f}% | "
         f"Fine Prevalence: {fine_prevalence:.2f}% | Verdict: {ore_class}"
     )
-    
+
     return DetectionResult(
         talc_mask=talc_mask,
         sulfide_ordinary_mask=ordinary_mask,

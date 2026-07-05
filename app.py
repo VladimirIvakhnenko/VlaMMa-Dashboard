@@ -34,9 +34,21 @@ st.set_page_config(
     initial_sidebar_state="expanded",
 )
 
+MAX_DIMENSION = 15000
+MAX_FILE_SIZE_MB = 100
+
 def load_image(uploaded_file) -> np.ndarray:
-    file_bytes = np.asarray(bytearray(uploaded_file.read()), dtype=np.uint8)
+    data = uploaded_file.read()
+    if len(data) > MAX_FILE_SIZE_MB * 1024 * 1024:
+        raise ValueError(f"Файл слишком большой ({len(data) / 1024 / 1024:.0f} МБ). Максимум: {MAX_FILE_SIZE_MB} МБ.")
+    file_bytes = np.asarray(bytearray(data), dtype=np.uint8)
     img_bgr = cv2.imdecode(file_bytes, cv2.IMREAD_COLOR)
+    del file_bytes
+    if img_bgr is None:
+        raise ValueError("Не удалось декодировать изображение.")
+    h, w = img_bgr.shape[:2]
+    if max(h, w) > MAX_DIMENSION:
+        raise ValueError(f"Изображение слишком большое ({w}x{h}). Максимум: {MAX_DIMENSION}x{MAX_DIMENSION} пикселей.")
     return img_bgr
 
 def bgr_to_rgb(img: np.ndarray) -> np.ndarray:
@@ -48,11 +60,11 @@ def calculate_physical_area(pixels: int, um_per_pixel: float) -> float:
 def generate_pdf_report(result, filename: str, um_per_pixel: float) -> bytes:
     buffer = io.BytesIO()
     doc = SimpleDocTemplate(buffer, pagesize=letter, rightMargin=40, leftMargin=40, topMargin=40, bottomMargin=40)
-    
+
     styles = getSampleStyleSheet()
     title_font = "Arial-Bold" if USE_CYRILLIC_FONT else "Helvetica-Bold"
     body_font = "Arial" if USE_CYRILLIC_FONT else "Helvetica"
-    
+
     title_style = ParagraphStyle(
         "ReportTitle",
         parent=styles["Heading1"],
@@ -62,7 +74,7 @@ def generate_pdf_report(result, filename: str, um_per_pixel: float) -> bytes:
         textColor="#1e293b",
         spaceAfter=15
     )
-    
+
     subtitle_style = ParagraphStyle(
         "ReportSubtitle",
         parent=styles["Normal"],
@@ -72,7 +84,7 @@ def generate_pdf_report(result, filename: str, um_per_pixel: float) -> bytes:
         textColor="#64748b",
         spaceAfter=20
     )
-    
+
     header_style = ParagraphStyle(
         "SectionHeader",
         parent=styles["Heading2"],
@@ -83,7 +95,7 @@ def generate_pdf_report(result, filename: str, um_per_pixel: float) -> bytes:
         spaceBefore=15,
         spaceAfter=10
     )
-    
+
     text_style = ParagraphStyle(
         "ReportText",
         parent=styles["Normal"],
@@ -93,47 +105,47 @@ def generate_pdf_report(result, filename: str, um_per_pixel: float) -> bytes:
         textColor="#334155",
         spaceAfter=8
     )
-    
+
     bold_text_style = ParagraphStyle(
         "ReportTextBold",
         parent=text_style,
         fontName=title_font
     )
-    
+
     story = []
-    
+
     story.append(Paragraph("🔬 АВТОМАТИЧЕСКИЙ ОТЧЕТ АНАЛИЗА ШЛИФА", title_style))
     story.append(Paragraph(f"Файл: {filename} | Дата: {time.strftime('%d.%m.%Y %H:%M:%S')}", subtitle_style))
     story.append(Spacer(1, 10))
-    
+
     story.append(Paragraph("Результаты классификации", header_style))
     story.append(Paragraph(f"<b>Класс руды:</b> {result.ore_class}", text_style))
     story.append(Paragraph(f"<b>Заключение:</b> {result.conclusion}", text_style))
     story.append(Spacer(1, 10))
-    
+
     talc_mm2 = calculate_physical_area(result.talc_area_px, um_per_pixel)
     ord_mm2 = calculate_physical_area(result.ordinary_area_px, um_per_pixel)
     fine_mm2 = calculate_physical_area(result.fine_area_px, um_per_pixel)
-    
+
     story.append(Paragraph("Количественные метрики", header_style))
     data = [
-        [Paragraph("<b>Показатель</b>", bold_text_style), 
-         Paragraph("<b>Значение (%)</b>", bold_text_style), 
+        [Paragraph("<b>Показатель</b>", bold_text_style),
+         Paragraph("<b>Значение (%)</b>", bold_text_style),
          Paragraph("<b>Площадь (мм²)</b>", bold_text_style)],
-        [Paragraph("Доля талька", text_style), 
-         Paragraph(f"{result.talc_percent:.2f}%", text_style), 
+        [Paragraph("Доля талька", text_style),
+         Paragraph(f"{result.talc_percent:.2f}%", text_style),
          Paragraph(f"{talc_mm2:.4f} мм²", text_style)],
-        [Paragraph("Обычные сульфидные срастания", text_style), 
-         Paragraph(f"{result.sulfide_ordinary_percent:.2f}%", text_style), 
+        [Paragraph("Обычные сульфидные срастания", text_style),
+         Paragraph(f"{result.sulfide_ordinary_percent:.2f}%", text_style),
          Paragraph(f"{ord_mm2:.4f} мм²", text_style)],
-        [Paragraph("Тонкие сульфидные срастания", text_style), 
-         Paragraph(f"{result.sulfide_fine_percent:.2f}%", text_style), 
+        [Paragraph("Тонкие сульфидные срастания", text_style),
+         Paragraph(f"{result.sulfide_fine_percent:.2f}%", text_style),
          Paragraph(f"{fine_mm2:.4f} мм²", text_style)],
-        [Paragraph("Преобладание тонких срастаний", text_style), 
-         Paragraph(f"{result.fine_prevalence_percent:.2f}%", text_style), 
+        [Paragraph("Преобладание тонких срастаний", text_style),
+         Paragraph(f"{result.fine_prevalence_percent:.2f}%", text_style),
          Paragraph("-", text_style)],
     ]
-    
+
     t = Table(data, colWidths=[200, 150, 150])
     t.setStyle(TableStyle([
         ('BACKGROUND', (0,0), (2,0), '#f1f5f9'),
@@ -144,24 +156,29 @@ def generate_pdf_report(result, filename: str, um_per_pixel: float) -> bytes:
     ]))
     story.append(t)
     story.append(Spacer(1, 20))
-    
+
     story.append(Paragraph("Визуализация распределения фаз", header_style))
     story.append(Paragraph("<font color='#2563eb'>■</font> Синий = Тальк | <font color='#16a34a'>■</font> Зеленый = Обычные сульфиды | <font color='#dc2626'>■</font> Красный = Тонкие сульфиды", text_style))
     story.append(Spacer(1, 5))
-    
-    overlay_rgb = bgr_to_rgb(result.overlay)
-    oh, ow = overlay_rgb.shape[:2]
+
+    oh, ow = result.overlay.shape[:2]
     max_w, max_h = 500, 300
     scale = min(max_w / ow, max_h / oh)
     pdf_w, pdf_h = int(ow * scale), int(oh * scale)
-    
-    img_pil = Image.fromarray(overlay_rgb)
+
+    overlay_small = cv2.resize(result.overlay, (pdf_w, pdf_h), interpolation=cv2.INTER_AREA)
+    overlay_rgb_small = cv2.cvtColor(overlay_small, cv2.COLOR_BGR2RGB)
+    del overlay_small
+
+    img_pil = Image.fromarray(overlay_rgb_small)
+    del overlay_rgb_small
     img_buf = io.BytesIO()
     img_pil.save(img_buf, format="JPEG", quality=85)
+    del img_pil
     img_buf.seek(0)
-    
+
     story.append(RLImage(img_buf, width=pdf_w, height=pdf_h))
-    
+
     doc.build(story)
     pdf_data = buffer.getvalue()
     buffer.close()
@@ -171,13 +188,13 @@ with st.sidebar:
     st.image("https://img.icons8.com/fluency/96/microscope.png", width=80)
     st.title("🔬 Настройки")
     st.markdown("---")
-    
+
     st.subheader("Масштаб и калибровка")
     opt_lens = st.selectbox(
         "Увеличение объектива",
         ["5x (1.50 мкм/пиксель)", "10x (0.75 мкм/пиксель)", "20x (0.37 мкм/пиксель)", "Ввести вручную"]
     )
-    
+
     if opt_lens == "5x (1.50 мкм/пиксель)":
         um_per_pixel = 1.50
     elif opt_lens == "10x (0.75 мкм/пиксель)":
@@ -186,14 +203,14 @@ with st.sidebar:
         um_per_pixel = 0.37
     else:
         um_per_pixel = st.number_input("Разрешение (мкм/пиксель)", min_value=0.01, max_value=100.0, value=1.00, step=0.05)
-        
+
     st.markdown("---")
     st.subheader("Визуализация")
     overlay_alpha = st.slider(
         "Прозрачность маски", 0.1, 0.9, 0.45, 0.05,
         help="0.1 = только оригинал, 0.9 = только маска"
     )
-    
+
     st.markdown("---")
     st.caption("Задача 3 · Хакатон 2026")
 
@@ -224,7 +241,11 @@ with tab_single:
         )
 
     if uploaded is not None:
-        img_bgr = load_image(uploaded)
+        try:
+            img_bgr = load_image(uploaded)
+        except ValueError as e:
+            st.error(str(e))
+            st.stop()
         h, w = img_bgr.shape[:2]
 
         st.markdown(f"**Файл:** `{uploaded.name}` | **Разрешение:** {w}×{h} px | **Размер:** {uploaded.size/1024:.0f} КБ")
@@ -278,8 +299,8 @@ with tab_single:
 
             with vcol2:
                 st.caption("🗺️ Оверлей маски (Синий = тальк · Зеленый = обычные сульфиды · Красный = тонкие сульфиды)")
-                
-                overlay = result.overlay.copy()
+
+                overlay = result.overlay
                 if overlay_alpha != 0.45:
                     from detector import create_overlay
                     overlay = create_overlay(
@@ -290,7 +311,7 @@ with tab_single:
                         result.annotation_mask,
                         alpha=overlay_alpha
                     )
-                
+
                 display_overlay = overlay if overlay.shape[0] <= 4096 else \
                     cv2.resize(overlay, (min(w, 1200), min(h, 900)))
                 st.image(bgr_to_rgb(display_overlay), use_container_width=True)
@@ -310,9 +331,13 @@ with tab_single:
                 )
 
             with ecol2:
-                overlay_pil = Image.fromarray(bgr_to_rgb(overlay))
+                overlay_rgb = cv2.cvtColor(overlay, cv2.COLOR_BGR2RGB)
+                del overlay
+                overlay_pil = Image.fromarray(overlay_rgb)
+                del overlay_rgb
                 ov_buf = io.BytesIO()
                 overlay_pil.save(ov_buf, format="JPEG", quality=90)
+                del overlay_pil
                 st.download_button(
                     "⬇️ Скачать оверлей (JPEG)",
                     data=ov_buf.getvalue(),
@@ -392,12 +417,23 @@ with tab_batch:
                     img_bgr = cv2.imread(str(img_path))
                     if img_bgr is None:
                         continue
+                    h, w = img_bgr.shape[:2]
+                    if max(h, w) > MAX_DIMENSION:
+                        results_list.append({
+                            "Файл": img_path.name,
+                            "Класс руды": "ПРОПУСК",
+                            "Доля талька (%)": "-",
+                            "Вывод": f"Слишком большое ({w}x{h})",
+                        })
+                        del img_bgr
+                        continue
                     result = analyze_image(img_bgr, filename=img_path.name)
-                    
+                    del img_bgr
+
                     talc_mm2 = calculate_physical_area(result.talc_area_px, um_per_pixel)
                     ord_mm2 = calculate_physical_area(result.ordinary_area_px, um_per_pixel)
                     fine_mm2 = calculate_physical_area(result.fine_area_px, um_per_pixel)
-                    
+
                     results_list.append({
                         "Файл": img_path.name,
                         "Класс руды": result.ore_class,
@@ -410,6 +446,7 @@ with tab_batch:
                         "Преобладание тонких (%)": f"{result.fine_prevalence_percent:.2f}",
                         "Вывод": result.conclusion,
                     })
+                    del result
                 except Exception as e:
                     results_list.append({
                         "Файл": img_path.name,
@@ -441,7 +478,7 @@ with tab_about:
     st.markdown("""
     ### Назначение
     End-to-end система классификации руд по панорамным OM-изображениям полированных шлифов.
-    
+
     ### Классификационная логика ТЗ
     1. **Оталькованная руда**: доля талька > 10%.
     2. **Рядовая руда**: доля талька <= 10%, при этом площадь обычных срастаний больше площади тонких.

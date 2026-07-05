@@ -1,0 +1,1 @@
+2026-07-05 05:38:44,659 - INFO - File: 2652980 10x 2.JPG | Resolution: 2272x1704 | Talc: 1.32% | Ordinary Sulfides: 0.00% | Fine Sulfides: 7.29% | Fine Prevalence: 100.00% | Verdict: Труднообогатимая руда
